@@ -1,0 +1,59 @@
+#include <iostream>
+#include<math.h> 
+using namespace std;
+
+class Triangle{
+public:
+	Triangle(double,double,double);
+	Triangle(double,double);
+	Triangle(double);
+	Triangle();
+	double GetArea();
+	double GetPerimeter();
+	double Show();
+private:
+	double a,b,c;
+};
+
+Triangle::Triangle(double x,double y,double z)
+{a=x;b=y;c=z;  }
+	
+Triangle::Triangle(double x,double y):a(x),b(y),c(y)
+{  }
+
+Triangle::Triangle(double x):a(x),b(x),c(x)
+{  }
+
+Triangle::Triangle( )
+{ a=0;b=0;c=0; }
+
+double Triangle::GetArea( )
+{
+	double s,area;
+	s=(a+b+c)/2;
+	area=sqrt(s*(s-a)*(s-b)*(s-c));
+	return area;
+}
+
+double Triangle::GetPerimeter()
+{  return (a+b+c);
+}
+
+double Triangle::Show( )
+{
+	cout<<"a="<<a<<endl<<"b="<<b<<endl<<"c="<<c<<endl;
+	cout<<"area=="<<GetArea( )<<endl;
+	cout<<"Perimeter="<<GetPerimeter( )<<endl;
+	return 1;
+}
+
+int main( )
+{
+   Triangle d(3,4,5);
+   Triangle m(3,4);
+   Triangle n(5);
+   d.Show( );
+   m.Show( );
+   n.Show( );
+   return -1;
+}
