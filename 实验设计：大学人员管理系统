@@ -1,0 +1,619 @@
+#define _CRT_SECURE_NO_DEPRECATE
+#include <iostream>
+#include <string.h>
+#include <fstream>
+#include <cstring> 
+using namespace std;
+class student;
+class studentlist;
+class person
+{
+public:
+
+	person() { strcpy(name, "XXX"); age = 0; sex = 'm'; }
+	person(char nam[20], int ag, char se)
+	{
+		strcpy(name, nam); age = ag; sex = se;
+	}
+	person(person& p) { strcpy(name, p.name); age = p.age; sex = p.sex; }
+	void print()
+	{
+		cout << "name=" << name << endl;
+		cout << "age=" << age << endl;
+		cout << "sex=" << sex << endl;
+	}
+	friend studentlist;         //
+	friend student;           //
+	char* getname() { return name; }
+	int getage() { return age; }
+	char getsex() { return sex; }
+private:
+	char name[20];
+	int age;
+	char sex;
+};
+
+class student :public person
+{
+	friend studentlist;
+public:
+	student() :person() { strcpy(speciality, "XXXXX"); }
+	student(char nam[20], int ag, char se, char specia[50]) :person(nam, ag, se)
+	{
+		strcpy(speciality, specia);
+	}
+	student(student& s) :person(s) { strcpy(speciality, s.getspecia()); }   //
+	void print()    //
+	{
+		person::print();
+		cout << "speciality=" << speciality << endl;
+
+	}
+	char* getspecia() { return speciality; }
+	void readFromFile(fstream& in)
+	{
+		char temp[30] = "";
+		in.read(temp, 9);  temp[9] = '\0';   strcpy(name, temp);
+
+		in.read((char*)&age, sizeof(int));
+		in.read(temp, 2);   sex = temp[0];
+		in.read(temp, 16); temp[16] = '\0';  strcpy(speciality, temp);
+
+	};
+	void writeToFile(fstream& out) const
+	{
+		char ssex[5];
+		out.write(name, 9);       //假定登录名最多9个字符
+
+		out.write((char*)&age, sizeof(int));
+		ssex[0] = sex; ssex[1] = '\0';
+		out.write(ssex, 2);
+		out.write(speciality, 16);
+	};
+
+private:
+	char speciality[50];
+};
+
+class teacher :public person
+{
+public:
+	teacher() :person() { strcpy(department, "XXXXX"); }
+	teacher(char nam[20], int ag, char se, char dep[50]) :person(nam, ag, se)
+	{
+		strcpy(department, dep);
+	}
+	teacher(teacher& t) :person(t) { strcpy(department, t.getdepart()); };    //
+	void print()    //
+	{
+		person::print();
+		cout << "department=" << department << endl;
+	}
+	char* getdepart() { return department; }
+private:
+	char department[50];
+};
+
+
+
+class employ :public person
+{
+public:
+	employ() :person() { strcpy(department, "XXXXX"); strcpy(post, "XXX"); }
+	employ(char nam[20], int ag, char se, char dep[50],char pos[30]) :person(nam, ag, se)
+	{
+		strcpy(department, dep); strcpy(post, pos);
+	}
+	employ(employ& e) :person(e) { strcpy(department, e.getdepart()); strcpy(post, e.getpost()); };   //
+	void print()     //
+	{
+		cout << "department" << department << endl;
+		cout << "post=" << post << endl;
+
+	}
+	char* getdepart() { return department; }
+	char* getpost() { return post; }
+private:
+	char department[50];
+	char post[30];
+};
+
+class studentlist
+{
+public:
+	studentlist() {   }
+	void  insert(student& s, int r)   //
+	{
+
+		student temp;
+		for (int i = num - 1; i >= r - 1; i--)
+			ss[i + 1] = ss[i];
+		ss[r - 1] = s;
+		num++;
+
+	}
+	void dele(char nam[20])     //
+	{
+		int t = -1, i;
+		for (i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+			for (i = t; i < num; i++)
+				ss[i] = ss[i + 1];
+			cout << "delete!" << endl;
+			num--;
+		}
+		else
+			cout << "not delete!" << endl;
+
+	}
+	void locate(char nam[20])     //
+	{
+		int t = -1;
+		for (int i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+
+			cout << "Find!" << endl;
+
+		}
+		else
+			cout << "not Find!" << endl;
+
+
+	}
+	void list()    //
+	{
+		for (int i = 0; i < num; i++)
+		{
+			cout << "no." << i + 1 << "student:" << endl;
+			ss[i].print();
+		}
+
+
+	}
+	void append(student& s)    //
+	{
+		ss[num] = s;
+		num++;
+
+	}
+	void findnum() { cout << "num" << num << endl; }
+	void readFromFile(const char* FileName)
+	{
+		fstream file(FileName, ios::in | ios::binary);
+		if (!file)
+		{
+			cout << "   文件打开错误!" << endl;  abort();
+		}
+		else cout << "file open success" << endl;
+		num = 0;
+		while (!file.eof())
+		{
+			ss[num].readFromFile(file);  num++;
+		}
+		num--;
+		cout << "num=" << num << endl;
+		file.close();
+	}
+	void writeToFile(const char* FileName)
+	{
+		fstream file(FileName, ios::out | ios::binary);
+		if (!file)
+		{
+			cout << "   文件打开错误!" << endl;  abort();
+		}
+		else
+			cout << "file open success" << endl;
+		for (int i = 0; i < num; ++i) { ss[i].writeToFile(file); }
+		cout << "num=" << num << endl;
+		file.close();
+	}
+private:
+	student  ss[100];
+	static int num;
+};
+int  studentlist::num = 0;
+
+
+class teacherlist
+{
+public:
+	teacherlist() { }
+	void insert(teacher& s, int r)
+	{
+		teacher temp;
+		for (int i = num - 1; i >= r - 1; i--)
+			ss[i + 1] = ss[i];
+		ss[r - 1] = s;
+		num++;
+
+	}
+	void dele(char nam[20])
+	{
+		int t = -1, i;
+		for (i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+			for (i = t; i < num; i++)
+				ss[i] = ss[i + 1];
+			cout << "delete!" << endl;
+			num--;
+		}
+		else
+			cout << "not delete!" << endl;
+
+
+	}
+	void locate(char nam[20])
+	{
+
+		int t = -1;
+		for (int i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+
+			cout << "Find!" << endl;
+
+		}
+		else
+			cout << "not Find!" << endl;
+
+	}
+	void list()
+	{
+
+		for (int i = 0; i < num; i++)
+		{
+			cout << "no." << i + 1 << "teacher:" << endl;
+			ss[i].print();
+		}
+
+
+	}
+	void append(teacher& s)
+	{
+		ss[num] = s;
+		num++;
+
+	}
+	void findnum() { cout << "num" << num << endl; }
+private:
+	teacher  ss[100];
+	static int num;
+};
+int teacherlist::num = 0;
+
+
+class employlist
+{
+public:
+	employlist() {  }
+	void insert(employ& s, int r)
+	{
+
+		employ temp;
+		for (int i = num - 1; i >= r - 1; i--)
+			ss[i + 1] = ss[i];
+		ss[r - 1] = s;
+		num++;
+	}
+	void dele(char nam[20])
+	{
+
+		int t, i;
+		for (i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+			for (i = t; i < num; i++)
+				ss[i] = ss[i + 1];
+			cout << "delete!" << endl;
+			num--;
+		}
+		else
+			cout << "not delete!" << endl;
+
+	}
+	void locate(char nam[20])
+	{
+		int t = -1;
+		for (int i = 0; i < num; i++)
+			if (strcmp(ss[i].getname(), nam) == 0)
+			{
+				t = i; break;
+			}
+		if (t >= 0 && t < num)
+		{
+
+			cout << "Find!" << endl;
+
+		}
+		else
+			cout << "not Find!" << endl;
+
+
+	}
+	void list()
+	{
+
+		for (int i = 0; i < num; i++)
+		{
+			cout << "no." << i + 1 << "teacher:" << endl;
+			ss[i].print();
+		}
+
+	}
+	void append(employ& s)
+	{
+
+		ss[num] = s;
+		num++;
+
+	}
+	void findnum() { cout << "num=" << num << endl; }
+private:
+	employ  ss[100];
+	static int num;
+};
+int employlist::num = 0;
+
+
+void menustudent(void)
+{
+	system("cls");       //清屏
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "       简单学生信息处理系统" << endl << endl;
+	cout << "1.插入学生 " << endl;
+	cout << "2:删除学生" << endl;
+	cout << "3.追加学生" << endl;
+	cout << "4.输出学生信息" << endl;
+	cout << "5:查询学生人数 " << endl;
+	cout << "6.查询学生" << endl;
+	cout << "7:write to file" << endl;
+	cout << "8:read from file" << endl;
+	cout << "9:退出 " << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << endl << endl << endl;
+}
+
+void menuteacher(void)
+{
+	system("cls");       //清屏
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "       简单教师信息处理系统" << endl << endl;
+	cout << "1.插入教师 " << endl;
+	cout << "2:删除教师" << endl;
+	cout << "3.追加教师" << endl;
+	cout << "4.输出教师信息" << endl;
+	cout << "5:查询教师人数 " << endl;
+	cout << "6.查询教师" << endl;
+	cout << "7:退出 " << endl << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << endl << endl << endl;
+}
+
+void menuemploy(void)
+{
+	system("cls");       //清屏
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "       简单职工信息处理系统" << endl << endl;
+	cout << "1.插入职工 " << endl;
+	cout << "2:删除职工" << endl;
+	cout << "3.追加职工" << endl;
+	cout << "4.输出职工信息" << endl;
+	cout << "5:查询职工人数 " << endl;
+	cout << "6.查询职工" << endl;
+	cout << "7:退出 " << endl << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << endl << endl << endl;
+}
+
+void menu()
+{
+	system("cls");       //清屏
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "       请选择要处理的信息类型" << endl << endl;
+	cout << "1.学生信息处理 " << endl;
+	cout << "2:教师信息处理" << endl;
+	cout << "3.职工信息处理" << endl;
+	cout << "4:退出 " << endl << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+	cout << endl << endl << endl;
+}
+
+#include <iostream>
+using namespace std;
+int main()
+{
+	char na[30], se, sp[30], de[30], po[30];
+	int ag, k;
+	int c, cho;
+	while (1)
+	{
+	s:menu();
+		cout << "请输入选择：";
+		cin >> c;
+		if (c == 1)
+		{
+			studentlist  s;
+			while (1)
+			{
+				menustudent();
+				do
+				{
+					cout << "请输入选择:" << endl;
+					cin >> cho;
+				} while (cho < 1 || cho>9);
+				switch (cho)
+				{
+				case 1:
+				{  cout << "input student's name,age,sex,speciality:" << endl;
+				cin >> na >> ag >> se >> sp;
+				student t(na, ag, se, sp);
+				cout << "input the locate that you want insert:" << endl;
+				cin >> k;
+				s.insert(t, k); break;    //
+				}
+				case 2: {cout << "要删除职工的姓名？";
+					cin >> na;
+					s.dele(na);
+					break; }
+				case 3:
+				{ cout << "input student's name,age,sex,speciality:" << endl;
+				cin >> na >> ag >> se >> sp;
+				student tt(na, ag, se, sp);
+				s.append(tt);  //
+				break; }
+				case 4:
+				{s.list();  //
+				break; }
+				case 5: {s.findnum(); //
+					break;     }
+				case 6: { cout << "input name:" << endl;
+					cin >> na;
+					s.locate(na);//
+					break;
+				}
+
+				case 7: {s.writeToFile("aa"); break; }
+				case 8: {s.readFromFile("aa"); break; }
+				case 9: goto s;
+
+
+				}
+				cout << endl << "敲回车继续!" << endl;
+				cin.sync();   //清空输入缓冲区的内容  
+				cin.get();    //从指定的输入流中提取一个字符，防止屏幕一闪而过
+			}
+		}
+		else if (c == 2)
+		{
+			teacherlist  rr;
+			while (1)
+			{
+				menuteacher();
+				do
+				{
+					cout << "请输入选择:" << endl;
+					cin >> cho;
+				} while (cho < 1 || cho>7);
+				switch (cho)
+				{
+				case 1:
+				{ cout << "input teacher's name,age,sex,department:" << endl;
+				cin >> na >> ag >> se >> de;
+				teacher x(na, ag, se, de);
+				cout << "input the locate that you want insert:" << endl;
+				cin >> k;
+				rr.insert(x, k); break;//
+				break; }
+				case 2: {cout << "要删除职工的姓名？";
+					cin >> na;
+					rr.dele(na);
+					//
+					break; }
+				case 3:
+				{ cout << "input teacher's name,age,sex,department:" << endl;
+				cin >> na >> ag >> se >> de;
+				teacher xx(na, ag, se, de);
+				rr.append(xx);//
+				break; }
+				case 4: {rr.list();//
+					break; }
+				case 5: {rr.findnum();//
+
+					break;  }
+				case 6: { cout << "input name:" << endl;
+					cin >> na;
+					rr.locate(na);//
+					break;
+				}
+				case 7:	goto s;
+				}
+				cout << endl << "敲回车继续!" << endl;
+				cin.sync();   //清空输入缓冲区的内容  
+				cin.get();    //从指定的输入流中提取一个字符，防止屏幕一闪而过
+			}
+		}
+		else  if (c == 3)
+		{
+			employlist  ee;
+			while (1)
+			{
+				menuemploy();
+				do
+				{
+					cout << "请输入选择:" << endl;
+					cin >> cho;
+				} while (cho < 1 || cho>7);
+				switch (cho)
+				{
+				case 1:
+				{ cout << "input teacher's name,age,sex,department:" << endl;
+				cin >> na >> ag >> se >> de>>po;
+				employ m(na, ag, se, de,po);
+				cout << "input the locate that you want insert:" << endl;
+				cin >> k;
+				ee.insert(m, k); break;//
+				break; }
+				case 2: {cout << "要删除职工的姓名？";
+					cin >> na;
+					ee.dele(na);
+					//
+					break; }
+				case 3:
+				{ cout << "input teacher's name,age,sex,department:" << endl;
+				cin >> na >> ag >> se >> de>>po;
+				employ mm(na, ag, se, de,po);
+				ee.append(mm);;//
+				break; }
+				case 4: {ee.list();//
+					break; }
+				case 5: {ee.findnum();//
+
+					break;  }
+				case 6: { cout << "input name:" << endl;
+					cin >> na;
+					ee.locate(na);//
+					break;
+				}
+				case 7:	goto s;
+				}
+				cout << endl << "敲回车继续!" << endl;
+				cin.sync();   //清空输入缓冲区的内容  
+				cin.get();    //从指定的输入流中提取一个字符，防止屏幕一闪而过
+			}
+		}
+
+		else  return 0;
+	}
+	return 0;
+}
